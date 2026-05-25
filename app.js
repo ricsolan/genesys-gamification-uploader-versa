@@ -1,8 +1,8 @@
 // ==========================================
 // 1. CONFIGURACIÓN DE GENESYS CLOUD
 // ==========================================
-const clientId = '1c1e9531-bc0e-4326-a2bf-177ff46c4f25'; // ⚠️ REEMPLAZA AQUÍ
-const environment = 'usw2.pure.cloud'; // ⚠️ VERIFICA TU REGIÓN
+const clientId = '1c1e9531-bc0e-4326-a2bf-177ff46c4f25'; // ⚠️ REEMPLAZA CON EL CLIENT ID DE TU NUEVO CLIENTE
+const environment = 'usw2.pure.cloud'; // 🚀 Configurado para la región US West 2 (Oregon)
 
 const platformClient = require('platformClient');
 const client = platformClient.ApiClient.instance;
@@ -129,7 +129,6 @@ function readExcelFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        // cellDates: true permite que SheetJS procese las fechas correctamente
         const workbook = XLSX.read(e.target.result, { type: 'array', cellDates: true });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         resolve(XLSX.utils.sheet_to_json(worksheet, { defval: '' }));
@@ -161,7 +160,6 @@ function renderTable(data) {
         td.id = `statusCell-${index}`;
         td.innerHTML = '<span class="badge bg-secondary">Pendiente</span>';
       } else {
-        // Formateo visual de fechas en la tabla si viene como objeto Date
         td.textContent = (row[h] instanceof Date) ? row[h].toISOString().split('T')[0] : row[h];
       }
       tr.appendChild(td);
@@ -189,7 +187,6 @@ async function uploadToGenesysCloud(data) {
         const statusCell = document.getElementById(`statusCell-${i}`);
         statusCell.innerHTML = '<span class="badge bg-info">Procesando...</span>';
 
-        // Mapeo flexible de columnas por si el usuario cambia mayúsculas
         const email = row.CorreoElectronico || row.correo || row.Email;
         const metricName = row.NombreMetrica || row.Metrica || row.MetricName;
         const valor = row.Valor || row.valor || row.Value;
@@ -201,14 +198,11 @@ async function uploadToGenesysCloud(data) {
         }
 
         try {
-            // 1. Resolver Métrica desde el caché del perfil
             const metricId = currentProfileMetricsMap[metricName.toLowerCase().trim()];
             if (!metricId) throw new Error(`La métrica '${metricName}' no es válida en este perfil.`);
 
-            // 2. Resolver Agente (con caché)
             const userId = await getUserIdByEmail(email);
 
-            // 3. Dar formato ISO-8601 a la fecha (mediodía para evitar saltos de zona horaria)
             let formattedDate;
             if (fecha instanceof Date) {
                 formattedDate = fecha.toISOString().split('T')[0] + "T12:00:00Z";
@@ -216,7 +210,6 @@ async function uploadToGenesysCloud(data) {
                 formattedDate = new Date(fecha).toISOString().split('T')[0] + "T12:00:00Z";
             }
 
-            // 4. Enviar a Gamification (count siempre en 1)
             const payload = {
                 items: [{
                     userId: userId,
@@ -271,3 +264,22 @@ form.addEventListener('submit', async (event) => {
     setStatus('Error', 'danger');
   }
 });
+
+// ==========================================
+// 9. FUNCIONES GLOBALES DE SOPORTE
+// ==========================================
+window.downloadSampleExcel = function() {
+    try {
+        const ws_data = [
+            ["CorreoElectronico", "NombreMetrica", "Valor", "Fecha"],
+            ["agente.prueba@tuempresa.com", "Conversion Rate", "50", "2026-05-14"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Gamification");
+        XLSX.writeFile(wb, "Plantilla_Metricas_Actualizada.xlsx");
+    } catch (err) {
+        console.error("Error al descargar plantilla:", err);
+        alert("No se pudo generar el archivo Excel. Asegúrate de que la librería SheetJS se cargó correctamente.");
+    }
+};
