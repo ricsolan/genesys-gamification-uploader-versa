@@ -39,7 +39,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Gamification Profile:</label>
                         <select id="profileSelect" class="form-select">
-                            <option value="default">Perfil de Organización</option>
+                            <option value="">-- Seleccione un Perfil --</option>
                         </select>
                     </div>
 
@@ -87,18 +87,5 @@
 </div>
 
 <script src="app.js"></script>
-<script>
-    // Nueva Plantilla Excel Optimizada
-    function downloadSampleExcel() {
-        const ws_data = [
-            ["CorreoElectronico", "NombreMetrica", "Valor", "Fecha"],
-            ["agente.prueba@tuempresa.com", "Conversion Rate", "50", "2026-05-14"]
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Gamification");
-        XLSX.writeFile(wb, "Plantilla_Metricas_Actualizada.xlsx");
-    }
-</script>
 </body>
 </html>
