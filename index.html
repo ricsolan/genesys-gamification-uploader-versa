@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamification Uploader</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://sdk-cdn.mypurecloud.com/javascript/latest/purecloud-platform-client-v2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        .main-card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header-panel { background-color: #2a3138; color: white; border-radius: 12px 12px 0 0; padding: 20px; }
+        .btn-primary-custom { background-color: #ff4f1f; border-color: #ff4f1f; color: white; font-weight: 600; }
+        .btn-primary-custom:hover { background-color: #e0441a; color: white; }
+        .table-container { max-height: 400px; overflow-y: auto; }
+        th { position: sticky; top: 0; background-color: #f8f9fa; z-index: 1; }
+    </style>
+</head>
+<body class="p-4">
+
+<div class="container-fluid max-w-100">
+    <div id="alertContainer"></div>
+
+    <div class="card main-card">
+        <div class="header-panel d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">🚀 Carga Masiva de Métricas - Gamificación</h4>
+            <span class="badge bg-warning text-dark" id="statusBadge">Conectando...</span>
+        </div>
+        
+        <div class="card-body p-4">
+            <form id="gamification-form" class="row g-4">
+                
+                <div class="col-md-5 border-end pe-4">
+                    <h5 class="mb-3 text-muted">1. Configuración</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Gamification Profile:</label>
+                        <select id="profileSelect" class="form-select">
+                            <option value="default">Perfil de Organización</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Métrica Externa:</label>
+                        <select id="metricSelect" class="form-select">
+                            <option value="">Seleccione primero un perfil</option>
+                        </select>
+                    </div>
+
+                    <h5 class="mb-3 text-muted mt-4">2. Datos a Procesar</h5>
+                    
+                    <div class="mb-3">
+                        <button type="button" onclick="downloadSampleExcel()" class="btn btn-secondary w-100 mb-2">
+                            ⬇️ Descargar Plantilla Excel
+                        </button>
+                        <input type="file" id="excelInput" class="form-control" accept=".xlsx, .xls, .csv" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100 mt-2 py-2">
+                        🚀 Procesar y Cargar a Genesys Cloud
+                    </button>
+                </div>
+
+                <div class="col-md-7 ps-4">
+                    <h5 class="mb-3 text-muted">Resultados de la Operación</h5>
+                    <p class="text-muted small mb-2" id="rowCount">No hay datos procesados aún.</p>
+                    
+                    <div class="table-responsive table-container border rounded">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr id="resultsHeader"></tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <tr>
+                                    <td class="text-center text-muted py-4">Esperando archivo Excel...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+    // Nueva Plantilla Excel Optimizada
+    function downloadSampleExcel() {
+        const ws_data = [
+            ["CorreoElectronico", "NombreMetrica", "Valor", "Fecha"],
+            ["agente.prueba@tuempresa.com", "Conversion Rate", "50", "2026-05-14"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Gamification");
+        XLSX.writeFile(wb, "Plantilla_Metricas_Actualizada.xlsx");
+    }
+</script>
+</body>
+</html>
