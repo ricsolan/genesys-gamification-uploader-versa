@@ -1,13 +1,17 @@
 // ==========================================
 // 1. CONFIGURACIÓN DE GENESYS CLOUD
 // ==========================================
-const clientId = '1c1e9531-bc0e-4326-a2bf-177ff46c4f25'; // ⚠️ REEMPLAZA CON EL CLIENT ID DE TU NUEVO CLIENTE
-const environment = 'usw2.pure.cloud'; // 🚀 Configurado para la región US West 2 (Oregon)
+// El Client ID es público por diseño en aplicaciones cliente.
+// La seguridad la garantizan las Redirect URIs registradas en Genesys Cloud.
+const clientId = '1c1e9531-bc0e-4326-a2bf-177ff46c4f25'; // Reemplaza con el Client ID con PKCE activado
+const environment = 'usw2.pure.cloud'; // Región US West 2 (Oregon)
 
 const platformClient = require('platformClient');
 const client = platformClient.ApiClient.instance;
 client.setEnvironment(environment);
-const redirectUri = window.location.href.split('?')[0];
+
+// Sanitización de la URI de redirección para evitar arrastrar query params
+const redirectUri = window.location.origin + window.location.pathname;
 
 // ==========================================
 // 2. REFERENCIAS Y CACHÉ
@@ -22,22 +26,26 @@ const resultsHeader = document.getElementById('resultsHeader');
 const resultsBody = document.getElementById('resultsBody');
 const rowCount = document.getElementById('rowCount');
 
-// Cachés para no saturar la API
-let currentProfileMetricsMap = {}; // Guardará { "conversion rate": "ID-1234" }
-const emailToUserIdCache = {};     // Guardará { "correo@empresa.com": "ID-5678" }
+// Cachés en memoria
+let currentProfileMetricsMap = {};
+const emailToUserIdCache = {};
 
 // ==========================================
-// 3. INICIALIZACIÓN
+// 3. INICIALIZACIÓN CON OAUTH PKCE
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        setStatus('Conectando a Genesys...', 'warning');
-        await client.loginImplicitGrant(clientId, redirectUri);
+        setStatus('Autenticando con Genesys (PKCE)...', 'warning');
+        
+        // Uso de loginPKCEGrant en lugar de loginImplicitGrant
+        await client.loginPKCEGrant(clientId, redirectUri);
+        
         setStatus('✅ Conectado', 'success');
         await loadProfiles();
     } catch (error) {
+        console.error('Error durante la autenticación PKCE:', error);
         setStatus('Error de Conexión', 'danger');
-        showAlert('Error al conectar. Verifica los scopes y Client ID.', 'danger');
+        showAlert('Error al conectar mediante OAuth PKCE. Verifica el Client ID y las Redirect URIs en Genesys.', 'danger');
     }
 });
 
@@ -67,7 +75,7 @@ async function loadProfiles() {
 async function loadExternalMetricsForProfile(profileId) {
     try {
         metricSelect.innerHTML = '<option value="">Filtrando métricas...</option>';
-        currentProfileMetricsMap = {}; // Limpiamos el mapa de métricas
+        currentProfileMetricsMap = {};
         
         // A. Catálogo general
         const extCatalog = await client.callApi('/api/v2/employeeperformance/externalmetrics/definitions', 'GET', {}, {}, {}, {}, null, ['PureCloud OAuth'], ['application/json'], ['application/json']);
@@ -87,13 +95,12 @@ async function loadExternalMetricsForProfile(profileId) {
             const mName = metric.name ? metric.name.toLowerCase().trim() : '';
             const matched = externalByName[mName];
             if (matched) {
-                // Guardamos el nombre y el ID exacto para cuando el Excel lo pida
                 currentProfileMetricsMap[mName] = matched.id; 
                 
                 const opt = document.createElement('option');
                 opt.value = matched.id;
                 opt.textContent = matched.name;
-                opt.disabled = true; // Solo informativo, el Excel manda
+                opt.disabled = true;
                 metricSelect.appendChild(opt);
             }
         });
